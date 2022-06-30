@@ -46,13 +46,11 @@ contract WhaleStrategy {
             return;
         }
 
+        // LAIR FULL
         address whaleToDethrone = whaleArr[whaleLimit - 1].addr;
         uint256 amountForRefund = whaleArr[whaleLimit - 1]
             .amountPaidToEnterLair;
-        if (lairFull == true) {
-            _accomodateWhaleAndDethrone(msg.value, msg.sender);
-            return;
-        }
+        _accomodateWhaleAndDethrone(msg.value, msg.sender);
 
         // Refund old whale
         payable(whaleToDethrone).transfer(amountForRefund);
@@ -66,6 +64,8 @@ contract WhaleStrategy {
         emit LogNewWhale(moneyPaid, newWhaleWallet);
         if (whaleArr.length >= whaleLimit) {
             // Sort array
+            sort();
+            // mark lair as full
             lairFull = true;
         }
     }
@@ -74,9 +74,14 @@ contract WhaleStrategy {
         private
     {
         // 1. Remove last element array
+        Whale memory dethronedWhale = whaleArr[whaleArr.length - 1];
+        whaleArr.pop();
         // 2. Emit event.
-        // 3. Find Index where to locate
-        // 4. Keep array sorted
+        emit LogDethroneWhale(newMoney, newAddr, dethronedWhale.addr);
+        // 3. Push new whale.
+        whaleArr.push(Whale(newAddr, newMoney));
+        // 4. Re-sort the array (can improve)
+        sort();
     }
 
     function _calculateMarketplaceShare(uint256 amount)
@@ -85,6 +90,36 @@ contract WhaleStrategy {
         returns (uint256)
     {
         return (amount * PERCENTAGE_MARKETPLACE_FEE) / 100;
+    }
+
+    function sort() internal {
+        quickSort(whaleArr, int256(0), int256(whaleArr.length - 1));
+    }
+
+    function quickSort(
+        Whale[] storage arr,
+        int256 left,
+        int256 right
+    ) private {
+        int256 i = left;
+        int256 j = right;
+        if (i == j) return;
+        uint256 pivot = arr[uint256(left + (right - left) / 2)]
+            .amountPaidToEnterLair;
+        while (i <= j) {
+            while (arr[uint256(i)].amountPaidToEnterLair > pivot) i++;
+            while (pivot > arr[uint256(j)].amountPaidToEnterLair) j--;
+            if (i <= j) {
+                (arr[uint256(i)], arr[uint256(j)]) = (
+                    arr[uint256(j)],
+                    arr[uint256(i)]
+                );
+                i++;
+                j--;
+            }
+        }
+        if (left < j) quickSort(arr, left, j);
+        if (i < right) quickSort(arr, i, right);
     }
 
     modifier checkMoney(uint256 amount) {
