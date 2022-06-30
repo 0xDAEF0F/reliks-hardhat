@@ -13,6 +13,7 @@ contract WhaleStrategy {
     bool public lairFull;
 
     Whale[] whaleArr;
+    mapping(address => bool) public isWhale;
 
     struct Whale {
         address addr;
@@ -60,7 +61,10 @@ contract WhaleStrategy {
         uint256 moneyPaid,
         address newWhaleWallet
     ) private {
+        // push whale to array
         whaleArr.push(Whale(newWhaleWallet, moneyPaid));
+        // mark in mapping as true
+        isWhale[newWhaleWallet] = true;
         emit LogNewWhale(moneyPaid, newWhaleWallet);
         if (whaleArr.length >= whaleLimit) {
             // Sort array
@@ -73,9 +77,11 @@ contract WhaleStrategy {
     function _accomodateWhaleAndDethrone(uint256 newMoney, address newAddr)
         private
     {
-        // 1. Remove last element array
+        // Remove last element from array
         Whale memory dethronedWhale = whaleArr[whaleArr.length - 1];
         whaleArr.pop();
+        // Mark mapping as false
+        isWhale[dethronedWhale.addr] = false;
         // 2. Emit event.
         emit LogDethroneWhale(newMoney, newAddr, dethronedWhale.addr);
         // 3. Push new whale.
@@ -93,10 +99,10 @@ contract WhaleStrategy {
     }
 
     function sort() internal {
-        quickSort(whaleArr, int256(0), int256(whaleArr.length - 1));
+        _quickSort(whaleArr, int256(0), int256(whaleArr.length - 1));
     }
 
-    function quickSort(
+    function _quickSort(
         Whale[] storage arr,
         int256 left,
         int256 right
@@ -118,8 +124,8 @@ contract WhaleStrategy {
                 j--;
             }
         }
-        if (left < j) quickSort(arr, left, j);
-        if (i < right) quickSort(arr, i, right);
+        if (left < j) _quickSort(arr, left, j);
+        if (i < right) _quickSort(arr, i, right);
     }
 
     modifier checkMoney(uint256 amount) {
