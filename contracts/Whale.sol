@@ -12,64 +12,55 @@ contract WhaleStrategy {
 
     bool public lairFull;
 
-    Whale[] whaleArr;
+    Whale[] public whaleArr;
     mapping(address => bool) public isWhale;
 
     struct Whale {
         address addr;
-        uint256 amountPaidToEnterLair;
+        uint256 grant;
     }
 
     event LogNewWhale(uint256 amount, address newWhale);
     event LogDethroneWhale(uint256 amount, address newWhale, address oldWhale);
 
     constructor(
-        address name,
+        address creatorAddress,
         uint256 maxWhaleLimit,
         uint256 initialCost
     ) {
-        creatorWallet = name;
+        creatorWallet = creatorAddress;
         whaleLimit = maxWhaleLimit;
         initialLairEntry = initialCost;
     }
 
     function enterLair() public payable checkMoney(msg.value) {
-        // Values apply both scenarios
-        uint256 mktPlaceFee = _calculateMarketplaceShare(msg.value);
-        uint256 creatorProfit = msg.value - mktPlaceFee;
-
-        // Distribute payments
-        payable(MARKETPLACE_ADDRESS).transfer(mktPlaceFee);
-        payable(creatorWallet).transfer(creatorProfit);
-
         if (lairFull == false) {
             _accomodateWhaleWithoutDethrone(msg.value, msg.sender);
+            // Calculate Mktplace fee
+            uint256 marketPlaceFee = _calculateAppFee(msg.value);
+            // Distribute ether
+            payable(MARKETPLACE_ADDRESS).transfer(marketPlaceFee);
+            payable(creatorWallet).transfer(msg.value - marketPlaceFee);
             return;
         }
 
         // LAIR FULL
-        address whaleToDethrone = whaleArr[whaleLimit - 1].addr;
-        uint256 amountForRefund = whaleArr[whaleLimit - 1]
-            .amountPaidToEnterLair;
+        Whale memory whaleToDethrone = whaleArr[whaleArr.length - 1];
         _accomodateWhaleAndDethrone(msg.value, msg.sender);
-
         // Refund old whale
-        payable(whaleToDethrone).transfer(amountForRefund);
+        payable(whaleToDethrone.addr).transfer(whaleToDethrone.grant);
     }
 
     function _accomodateWhaleWithoutDethrone(
         uint256 moneyPaid,
         address newWhaleWallet
     ) private {
-        // push whale to array
         whaleArr.push(Whale(newWhaleWallet, moneyPaid));
-        // mark in mapping as true
+        // Define whale in mapping
         isWhale[newWhaleWallet] = true;
         emit LogNewWhale(moneyPaid, newWhaleWallet);
         if (whaleArr.length >= whaleLimit) {
-            // Sort array
             sort();
-            // mark lair as full
             lairFull = true;
         }
     }
@@ -77,24 +68,17 @@ contract WhaleStrategy {
     function _accomodateWhaleAndDethrone(uint256 newMoney, address newAddr)
         private
     {
-        // Remove last element from array
         Whale memory dethronedWhale = whaleArr[whaleArr.length - 1];
+        // Remove last element from array since it is sorted
         whaleArr.pop();
-        // Mark mapping as false
+        // Remove whale from mapping
         isWhale[dethronedWhale.addr] = false;
-        // 2. Emit event.
         emit LogDethroneWhale(newMoney, newAddr, dethronedWhale.addr);
-        // 3. Push new whale.
         whaleArr.push(Whale(newAddr, newMoney));
-        // 4. Re-sort the array (can improve)
         sort();
     }
 
-    function _calculateMarketplaceShare(uint256 amount)
-        private
-        pure
-        returns (uint256)
-    {
+    function _calculateAppFee(uint256 amount) private pure returns (uint256) {
         return (amount * PERCENTAGE_MARKETPLACE_FEE) / 100;
     }
 
@@ -110,11 +94,10 @@ contract WhaleStrategy {
         int256 i = left;
         int256 j = right;
         if (i == j) return;
-        uint256 pivot = arr[uint256(left + (right - left) / 2)]
-            .amountPaidToEnterLair;
+        uint256 pivot = arr[uint256(left + (right - left) / 2)].grant;
         while (i <= j) {
-            while (arr[uint256(i)].amountPaidToEnterLair > pivot) i++;
-            while (pivot > arr[uint256(j)].amountPaidToEnterLair) j--;
+            while (arr[uint256(i)].grant > pivot) i++;
+            while (pivot > arr[uint256(j)].grant) j--;
             if (i <= j) {
                 (arr[uint256(i)], arr[uint256(j)]) = (
                     arr[uint256(j)],
@@ -132,11 +115,15 @@ contract WhaleStrategy {
         if (lairFull == false) {
             require(amount >= initialLairEntry, "Not enough money.");
             _;
+            return;
         }
-        require(
-            amount > whaleArr[whaleLimit - 1].amountPaidToEnterLair,
-            "Not enough to dethrone whale."
-        );
-        _;
+        if (lairFull == true) {
+            require(
+                amount > whaleArr[whaleLimit - 1].grant,
+                "Not enough to dethrone whale."
+            );
+            _;
+            return;
+        }
     }
 }
