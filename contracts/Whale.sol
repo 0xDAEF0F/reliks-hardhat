@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 // Global Constants
-address constant MARKETPLACE_ADDRESS = 0xD8f76d6C907E705E8C66D531f7C3386d33Dc2f2E;
 uint256 constant PERCENTAGE_MARKETPLACE_FEE = 10;
 
 contract WhaleStrategy {
-  address public immutable creatorWallet;
+  address public immutable CREATOR_ADDRESS;
+  address public immutable APP_ADDRESS;
   uint256 public whaleLimit;
   uint256 public initialLairEntry;
 
@@ -23,14 +23,11 @@ contract WhaleStrategy {
   event LogNewWhale(uint256 amount, address newWhale);
   event LogDethroneWhale(uint256 amount, address newWhale, address oldWhale);
 
-  constructor(
-    address creatorAddress,
-    uint256 maxWhaleLimit,
-    uint256 initialCost
-  ) {
-    creatorWallet = creatorAddress;
-    whaleLimit = maxWhaleLimit;
-    initialLairEntry = initialCost;
+  constructor(address _appAddress, uint256 _whaleLimit, uint256 _initialLairEntry) {
+    CREATOR_ADDRESS = msg.sender;
+    APP_ADDRESS = _appAddress;
+    whaleLimit = _whaleLimit;
+    initialLairEntry = _initialLairEntry;
   }
 
   function enterLair() public payable checkEtherGuard(msg.value) {
@@ -39,8 +36,8 @@ contract WhaleStrategy {
       // Calculate Mktplace fee
       uint256 marketPlaceFee = _calculateAppFee(msg.value);
       // Distribute ether
-      payable(MARKETPLACE_ADDRESS).transfer(marketPlaceFee);
-      payable(creatorWallet).transfer(msg.value - marketPlaceFee);
+      payable(APP_ADDRESS).transfer(marketPlaceFee);
+      payable(CREATOR_ADDRESS).transfer(msg.value - marketPlaceFee);
       return;
     }
     // lairFull == true
@@ -52,8 +49,8 @@ contract WhaleStrategy {
     // Distribute the profits
     uint256 profit = msg.value - whaleToDethrone.grant;
     uint256 appProfit = _calculateAppFee(profit);
-    payable(MARKETPLACE_ADDRESS).transfer(appProfit);
-    payable(creatorWallet).transfer(profit - appProfit);
+    payable(APP_ADDRESS).transfer(appProfit);
+    payable(CREATOR_ADDRESS).transfer(profit - appProfit);
   }
 
   function _accomodateWhaleWithoutDethrone(uint256 moneyPaid, address newWhaleWallet) private {

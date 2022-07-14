@@ -6,9 +6,9 @@ describe('Whale', () => {
   let whale: Contract
 
   beforeEach(async () => {
-    const [acct1] = await ethers.getSigners()
+    const [, appAcct] = await ethers.getSigners()
     const Whale = await ethers.getContractFactory('WhaleStrategy')
-    whale = await Whale.deploy(acct1.address, 3, ethers.utils.parseEther('1'))
+    whale = await Whale.deploy(appAcct.address, 3, ethers.utils.parseEther('1'))
     await whale.deployed()
   })
 
@@ -73,5 +73,17 @@ describe('Whale', () => {
     const newBalance = await acct1.getBalance()
     expect(newBalance.sub(oldBalance)).to.equal(ethers.utils.parseEther('5.40'))
   })
-  it('should transfer correctly when dethrone occurs', async () => {})
+  it('should transfer correctly when dethrone occurs', async () => {
+    const [creatorAcct, appAcct, acct3, acct4, acct5, acct6] = await ethers.getSigners()
+    const creatorOldBalance = await creatorAcct.getBalance()
+    const appOldBalance = await appAcct.getBalance()
+    await whale.connect(acct3).enterLair({ value: ethers.utils.parseEther('4') })
+    await whale.connect(acct4).enterLair({ value: ethers.utils.parseEther('3') })
+    await whale.connect(acct5).enterLair({ value: ethers.utils.parseEther('3') })
+    await whale.connect(acct6).enterLair({ value: ethers.utils.parseEther('13') })
+    const creatorNewBalance = await creatorAcct.getBalance()
+    const appNewBalance = await appAcct.getBalance()
+    expect(appNewBalance.sub(appOldBalance)).to.equal(ethers.utils.parseEther('2'))
+    expect(creatorNewBalance.sub(creatorOldBalance)).to.equal(ethers.utils.parseEther('18'))
+  })
 })
