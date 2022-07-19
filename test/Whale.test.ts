@@ -54,6 +54,7 @@ describe('Whale', () => {
     expect((await whale.whaleArr(2)).addr).to.equal(acct3.address)
     expect(await whale.isWhale(acct2.address)).to.be.false
     expect(await whale.isWhale(acct5.address)).to.be.true
+    expect(await whale.refundWhaleAmount(acct2.address)).to.equal(ethers.utils.parseEther('1'))
   })
   it('should revert when depositing less than lowest whale', async () => {
     const [, acct2, acct3, acct4, acct5] = await ethers.getSigners()

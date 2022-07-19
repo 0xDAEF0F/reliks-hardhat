@@ -14,6 +14,7 @@ contract WhaleStrategy {
 
   Whale[] public whaleArr;
   mapping(address => bool) public isWhale;
+  mapping(address => uint256) public refundWhaleAmount;
 
   struct Whale {
     address addr;
@@ -40,17 +41,23 @@ contract WhaleStrategy {
       payable(CREATOR_ADDRESS).transfer(msg.value - marketPlaceFee);
       return;
     }
-    // lairFull == true
+    // LAIR IS FULL
 
     Whale memory whaleToDethrone = whaleArr[whaleArr.length - 1];
     _accomodateWhaleAndDethrone(msg.value, msg.sender);
     // Refund old whale
-    payable(whaleToDethrone.addr).transfer(whaleToDethrone.grant);
+    refundWhaleAmount[whaleToDethrone.addr] = whaleToDethrone.grant;
     // Distribute the profits
     uint256 profit = msg.value - whaleToDethrone.grant;
     uint256 appProfit = _calculateAppFee(profit);
     payable(APP_ADDRESS).transfer(appProfit);
     payable(CREATOR_ADDRESS).transfer(profit - appProfit);
+  }
+
+  function withdraw() public {
+    require(refundWhaleAmount[msg.sender] > 0, "No Owed Amount.");
+    refundWhaleAmount[msg.sender] = 0;
+    payable(msg.sender).transfer(refundWhaleAmount[msg.sender]);
   }
 
   function _accomodateWhaleWithoutDethrone(uint256 moneyPaid, address newWhaleWallet) private {
