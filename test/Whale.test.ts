@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { Contract, BigNumber } from 'ethers'
+import { getContractAddress } from '@openzeppelin/hardhat-upgrades/dist/utils'
 
 describe('Whale', () => {
   let whale: Contract
@@ -86,5 +87,32 @@ describe('Whale', () => {
     const appNewBalance = await appAcct.getBalance()
     expect(appNewBalance.sub(appOldBalance)).to.equal(ethers.utils.parseEther('2'))
     expect(creatorNewBalance.sub(creatorOldBalance)).to.equal(ethers.utils.parseEther('18'))
+  })
+  it('events should be emitted properly', async () => {
+    const [, acct2, acct3, acct4, acct5] = await ethers.getSigners()
+    await expect(await whale.connect(acct2).enterLair({ value: ethers.utils.parseEther('1') }))
+      .to.emit(whale, 'LogNewWhale')
+      .withArgs(
+        '0x0000000000000000000000000000000000000000',
+        acct2.address,
+        ethers.utils.parseEther('1')
+      )
+    await expect(await whale.connect(acct3).enterLair({ value: ethers.utils.parseEther('2') }))
+      .to.emit(whale, 'LogNewWhale')
+      .withArgs(
+        '0x0000000000000000000000000000000000000000',
+        acct3.address,
+        ethers.utils.parseEther('2')
+      )
+    await expect(await whale.connect(acct4).enterLair({ value: ethers.utils.parseEther('3') }))
+      .to.emit(whale, 'LogNewWhale')
+      .withArgs(
+        '0x0000000000000000000000000000000000000000',
+        acct4.address,
+        ethers.utils.parseEther('3')
+      )
+    await expect(await whale.connect(acct5).enterLair({ value: ethers.utils.parseEther('4') }))
+      .to.emit(whale, 'LogNewWhale')
+      .withArgs(acct2.address, acct5.address, ethers.utils.parseEther('4'))
   })
 })

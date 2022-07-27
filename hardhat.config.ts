@@ -1,9 +1,9 @@
 import dotenv from 'dotenv'
 import { task } from 'hardhat/config'
-import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-etherscan'
 import '@openzeppelin/hardhat-upgrades'
+import '@nomicfoundation/hardhat-chai-matchers'
 
 dotenv.config()
 
@@ -16,15 +16,11 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
 })
 
 // task action function receives the Hardhat Runtime Environment as second argument
-task(
-  'blockNumber',
-  'Prints the current block number',
-  async (_, { ethers }) => {
-    await ethers.provider.getBlockNumber().then((blockNumber) => {
-      console.log('Current block number: ' + blockNumber)
-    })
-  }
-)
+task('blockNumber', 'Prints the current block number', async (_, { ethers }) => {
+  await ethers.provider.getBlockNumber().then((blockNumber) => {
+    console.log('Current block number: ' + blockNumber)
+  })
+})
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

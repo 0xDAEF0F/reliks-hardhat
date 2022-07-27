@@ -21,10 +21,13 @@ contract WhaleStrategy {
     uint256 grant;
   }
 
-  event LogNewWhale(uint256 amount, address newWhale);
-  event LogDethroneWhale(uint256 amount, address newWhale, address oldWhale);
+  event LogNewWhale(address oldWhale, address newWhale, uint256 amount);
 
-  constructor(address _appAddress, uint256 _whaleLimit, uint256 _initialLairEntry) {
+  constructor(
+    address _appAddress,
+    uint256 _whaleLimit,
+    uint256 _initialLairEntry
+  ) {
     CREATOR_ADDRESS = msg.sender;
     APP_ADDRESS = _appAddress;
     whaleLimit = _whaleLimit;
@@ -55,7 +58,7 @@ contract WhaleStrategy {
   }
 
   function withdraw() public {
-    require(refundWhaleAmount[msg.sender] > 0, "No Owed Amount.");
+    require(refundWhaleAmount[msg.sender] > 0, 'No Owed Amount.');
     refundWhaleAmount[msg.sender] = 0;
     payable(msg.sender).transfer(refundWhaleAmount[msg.sender]);
   }
@@ -65,7 +68,7 @@ contract WhaleStrategy {
     whaleArr.push(Whale(newWhaleWallet, moneyPaid));
     isWhale[newWhaleWallet] = true;
 
-    emit LogNewWhale(moneyPaid, newWhaleWallet);
+    emit LogNewWhale(address(0), newWhaleWallet, moneyPaid);
 
     if (whaleArr.length >= whaleLimit) {
       sort();
@@ -79,7 +82,7 @@ contract WhaleStrategy {
     whaleArr.pop();
     // Remove whale from mapping
     delete isWhale[dethronedWhale.addr];
-    emit LogDethroneWhale(newMoney, newAddr, dethronedWhale.addr);
+    emit LogNewWhale(dethronedWhale.addr, newAddr, newMoney);
     // Include new whale in mapping and array
     whaleArr.push(Whale(newAddr, newMoney));
     isWhale[newAddr] = true;
