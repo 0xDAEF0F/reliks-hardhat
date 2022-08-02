@@ -21,7 +21,7 @@ contract WhaleStrategy {
     uint256 grant;
   }
 
-  event LogNewWhale(address oldWhale, address newWhale, uint256 amount);
+  event LogNewWhale(uint256 indexed amount, address indexed newWhale, address oldWhale);
 
   constructor(
     address _appAddress,
@@ -68,7 +68,7 @@ contract WhaleStrategy {
     whaleArr.push(Whale(newWhaleWallet, moneyPaid));
     isWhale[newWhaleWallet] = true;
 
-    emit LogNewWhale(address(0), newWhaleWallet, moneyPaid);
+    emit LogNewWhale(moneyPaid, newWhaleWallet, address(0));
 
     if (whaleArr.length >= whaleLimit) {
       sort();
@@ -82,7 +82,7 @@ contract WhaleStrategy {
     whaleArr.pop();
     // Remove whale from mapping
     delete isWhale[dethronedWhale.addr];
-    emit LogNewWhale(dethronedWhale.addr, newAddr, newMoney);
+    emit LogNewWhale(newMoney, newAddr, dethronedWhale.addr);
     // Include new whale in mapping and array
     whaleArr.push(Whale(newAddr, newMoney));
     isWhale[newAddr] = true;

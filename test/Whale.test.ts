@@ -93,26 +93,27 @@ describe('Whale', () => {
     await expect(await whale.connect(acct2).enterLair({ value: ethers.utils.parseEther('1') }))
       .to.emit(whale, 'LogNewWhale')
       .withArgs(
-        '0x0000000000000000000000000000000000000000',
+        ethers.utils.parseEther('1'),
         acct2.address,
-        ethers.utils.parseEther('1')
+        '0x0000000000000000000000000000000000000000'
       )
     await expect(await whale.connect(acct3).enterLair({ value: ethers.utils.parseEther('2') }))
       .to.emit(whale, 'LogNewWhale')
       .withArgs(
-        '0x0000000000000000000000000000000000000000',
+        ethers.utils.parseEther('2'),
         acct3.address,
-        ethers.utils.parseEther('2')
+        '0x0000000000000000000000000000000000000000'
       )
     await expect(await whale.connect(acct4).enterLair({ value: ethers.utils.parseEther('3') }))
       .to.emit(whale, 'LogNewWhale')
       .withArgs(
-        '0x0000000000000000000000000000000000000000',
+        ethers.utils.parseEther('3'),
         acct4.address,
-        ethers.utils.parseEther('3')
+        '0x0000000000000000000000000000000000000000'
       )
     await expect(await whale.connect(acct5).enterLair({ value: ethers.utils.parseEther('4') }))
       .to.emit(whale, 'LogNewWhale')
-      .withArgs(acct2.address, acct5.address, ethers.utils.parseEther('4'))
+      // .withArgs(acct2.address, acct5.address, ethers.utils.parseEther('4'))
+      .withArgs(ethers.utils.parseEther('4'), acct5.address, acct2.address)
   })
 })
