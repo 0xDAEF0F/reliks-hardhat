@@ -34,7 +34,7 @@ contract WhaleStrategy {
     initialLairEntry = _initialLairEntry;
   }
 
-  function enterLair() public payable checkEtherGuard(msg.value) {
+  function enterLair() external payable checkEtherGuard(msg.value) {
     if (lairFull == false) {
       _accomodateWhaleWithoutDethrone(msg.value, msg.sender);
       // Calculate Mktplace fee
