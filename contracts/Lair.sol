@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Global Constants
 uint256 constant PERCENTAGE_MARKETPLACE_FEE = 10;
 
-contract WhaleStrategy {
+contract Lair {
   address public immutable CREATOR_ADDRESS;
   address public immutable APP_ADDRESS;
   uint256 public whaleLimit;
